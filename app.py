@@ -1,7 +1,7 @@
 import os
 from flask import Flask, render_template, request, flash, redirect, session, g
-from sqlalchemy.exc import IntegrityError
-from forms import UserAddForm, LoginForm, MessageForm
+from sqlalchemy.exc import IntegrityError, PendingRollbackError
+from forms import UserAddForm, UserEditForm, LoginForm, MessageForm
 from models import db, connect_db, User, Message
 
 CURR_USER_KEY = "curr_user"
@@ -47,8 +47,6 @@ def do_logout():
 
     if CURR_USER_KEY in session:
         del session[CURR_USER_KEY]
-
-
 
 
 @app.route('/signup', methods=["GET", "POST"])
@@ -216,6 +214,39 @@ def profile():
 
     # IMPLEMENT THIS
 
+    form = UserEditForm()
+
+    if not g.user:
+        flash("Access unauthorized.", "danger")
+        return redirect("/")
+
+    if form.validate_on_submit():
+        # Check for user password in order to updated the user information
+
+        if g.user.authenticate(g.user.username, form.password.data):
+            try:
+                g.user.username = form.username.data
+                g.user.email = form.email.data,
+                g.user.image_url = form.image_url.data or g.user.image_url,
+                g.user.header_image_url = form.header_image_url.data or User.header_image_url.default.arg,
+                g.user.bio = form.bio.data or g.user.bio,
+
+                db.session.add(g.user)
+                db.session.commit()
+
+                flash(f'{g.user.username} updated successfully.', 'info')
+                return redirect(f'/users/{g.user.id}')
+
+            except IntegrityError:
+                flash("Username/Mail already taken", 'danger')
+                return render_template('users/edit.html', form=form)
+
+        else:
+            flash('Invalid Password Information Entered.', 'danger')
+            return redirect('/')
+
+    return render_template('users/edit.html', form=form)
+
 
 @app.route('/users/delete', methods=["POST"])
 def delete_user():
@@ -323,3 +354,11 @@ def add_header(req):
     req.headers["Expires"] = "0"
     req.headers['Cache-Control'] = 'public, max-age=0'
     return req
+
+
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+# print what i need to see in the console
+def personal_debugger(var):
+    print('========================================')
+    print(var)
+    print('========================================')
