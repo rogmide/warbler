@@ -1,8 +1,6 @@
 import os
-
 from flask import Flask, render_template, request, flash, redirect, session, g
 from sqlalchemy.exc import IntegrityError
-
 from forms import UserAddForm, LoginForm, MessageForm
 from models import db, connect_db, User, Message
 
@@ -49,6 +47,8 @@ def do_logout():
 
     if CURR_USER_KEY in session:
         del session[CURR_USER_KEY]
+
+
 
 
 @app.route('/signup', methods=["GET", "POST"])
@@ -112,6 +112,11 @@ def logout():
     """Handle logout of user."""
 
     # IMPLEMENT THIS
+
+    do_logout()
+
+    flash('You have been logged out successfully.', 'info')
+    return redirect('/')
 
 
 ##############################################################################
