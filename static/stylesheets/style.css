@@ -545,3 +545,8 @@ p.card-bio {
 #header_image {
   height: calc(100% - 0.1px);;
 }
+
+.disbale_field {
+  pointer-events: none;
+  opacity: 0.5;
+}

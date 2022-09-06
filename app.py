@@ -3,6 +3,7 @@ from flask import Flask, render_template, request, flash, redirect, session, g
 from sqlalchemy.exc import IntegrityError, PendingRollbackError
 from forms import UserAddForm, UserEditForm, LoginForm, MessageForm
 from models import db, connect_db, User, Message
+from psycopg2.errors import UniqueViolation
 
 CURR_USER_KEY = "curr_user"
 
@@ -214,7 +215,7 @@ def profile():
 
     # IMPLEMENT THIS
 
-    form = UserEditForm()
+    form = UserEditForm(obj=g.user)
 
     if not g.user:
         flash("Access unauthorized.", "danger")
@@ -224,24 +225,65 @@ def profile():
         # Check for user password in order to updated the user information
 
         if g.user.authenticate(g.user.username, form.password.data):
-            try:
-                g.user.username = form.username.data
-                g.user.email = form.email.data,
-                g.user.image_url = form.image_url.data or g.user.image_url,
-                g.user.header_image_url = form.header_image_url.data or User.header_image_url.default.arg,
-                g.user.bio = form.bio.data or g.user.bio,
 
-                db.session.add(g.user)
-                db.session.commit()
+            # g.user.username = form.username.data
+            # g.user.email = form.email.data
+            g.user.image_url = form.image_url.data or g.user.image_url
+            g.user.header_image_url = form.header_image_url.data or g.user.header_image_url or User.header_image_url.default.arg
+            g.user.bio = form.bio.data or g.user.bio
 
-                flash(f'{g.user.username} updated successfully.', 'info')
-                return redirect(f'/users/{g.user.id}')
 
-            except IntegrityError:
-                flash("Username/Mail already taken", 'danger')
-                return render_template('users/edit.html', form=form)
+            # Added a bunch of logic to control duplicate name and email in the db
+            # Because for some reason cant control duplicate name or email with the exeptions
+            # This works for now but is not efficiency can be better
+            user = User.query.filter_by(username=form.username.data).first()
+            if g.user.username == form.username.data:
+                pass
+            else:
+                if not user:
+                    g.user.username = form.username.data
+                else:
+                    form.username.errors.append(
+                        'Username Taken. Please pick another')
+                    return render_template('users/edit.html', form=form)
+
+            user = User.query.filter_by(email=form.email.data).first()
+            if g.user.email == form.email.data:
+                pass
+            else:
+                if not user:
+                    g.user.email = form.email.data
+                else:
+                    form.email.errors.append(
+                        'E-Mail Taken. Please pick another')
+                    return render_template('users/edit.html', form=form)
+
+            db.session.commit()
+
+            flash(f'{g.user.username} updated successfully.', 'info')
+            return redirect(f'/users/{g.user.id}')
+
+            # try:
+            #     # db.session.add(g.user)
+            #     db.session.commit()
+
+            #     flash(f'{g.user.username} updated successfully.', 'info')
+            #     return redirect(f'/users/{g.user.id}')
+
+            # except PendingRollbackError:
+            #     flash("Username/Mail already taken", 'danger')
+            #     return render_template('users/edit.html', form=form)
+
+            # except IntegrityError:
+            #     flash("Username/Mail already taken", 'danger')
+            #     return render_template('users/edit.html', form=form)
+
+            # except UniqueViolation:
+            #     flash("Username/Mail already taken", 'danger')
+            #     return render_template('users/edit.html', form=form)
 
         else:
+
             flash('Invalid Password Information Entered.', 'danger')
             return redirect('/')
 
