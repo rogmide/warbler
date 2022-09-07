@@ -154,7 +154,10 @@ def users_show(user_id):
                 .order_by(Message.timestamp.desc())
                 .limit(100)
                 .all())
-    return render_template('users/show.html', user=user, messages=messages)
+
+    msg_likes = get_user_following_messages_and_likes()
+
+    return render_template('users/show.html', user=user, messages=messages, msg_liked=len(msg_likes[1]))
 
 
 @app.route('/users/<int:user_id>/following')
@@ -166,7 +169,8 @@ def show_following(user_id):
         return redirect("/")
 
     user = User.query.get_or_404(user_id)
-    return render_template('users/following.html', user=user)
+    msg_likes = get_user_following_messages_and_likes()
+    return render_template('users/following.html', user=user, msg_liked=len(msg_likes[1]))
 
 
 @app.route('/users/<int:user_id>/followers')
@@ -178,7 +182,27 @@ def users_followers(user_id):
         return redirect("/")
 
     user = User.query.get_or_404(user_id)
-    return render_template('users/followers.html', user=user)
+    msg_likes = get_user_following_messages_and_likes()
+    return render_template('users/followers.html', user=user, msg_liked=len(msg_likes[1]))
+
+
+@app.route('/users/<int:user_id>/liked')
+def users_liked_msg(user_id):
+    '''Show list of liked masseges for this user'''
+
+    if not g.user:
+        flash("Access unauthorized.", "danger")
+        return redirect("/")
+
+    msg_likes = get_user_following_messages_and_likes()
+
+    msgs_ids = [m.message_id for m in msg_likes[1]]
+    masseges = (Message.
+                query.
+                filter(Message.id.in_(msgs_ids))
+                .order_by(Message.timestamp.desc()))
+
+    return render_template('users/show_liked_msg.html', user=g.user, messages=masseges, msg_liked=len(msg_likes[1]))
 
 
 @app.route('/users/follow/<int:follow_id>', methods=['POST'])
@@ -352,32 +376,13 @@ def messages_destroy(message_id):
 
 @app.route('/')
 def homepage():
-    """Show homepage:
-
-    - anon users: no messages
-    - logged in: 100 most recent messages of followed_users
-    """
+    '''Show homepage:'''
 
     if g.user:
-        # Getting the users ID that the user is following messages
-        user_id_following = (Follows
-                             .query
-                             .filter(Follows.user_being_followed_id == g.user.id)
-                             .all())
 
-        # Return only the messages that the user that is login
-        # for the users that he/she is followings
-        messages = (Message
-                    .query
-                    .filter(Message.user_id.in_([u.user_following_id for u in user_id_following]))
-                    .order_by(Message.timestamp.desc())
-                    .limit(100)
-                    .all())
+        msg_likes = get_user_following_messages_and_likes()
 
-        likes = Likes.query.filter_by(user_id=g.user.id).all()
-        personal_debugger(likes)
-
-        return render_template('home.html', messages=messages, likes=[l.message_id for l in likes])
+        return render_template('home.html', messages=msg_likes[0], likes=[l.message_id for l in msg_likes[1]])
 
     else:
         return render_template('home-anon.html')
@@ -403,7 +408,6 @@ def get_and_add_likes(msg_id):
     # except IntegrityError:
     #     flash('Already there', 'info')
 
-
     return redirect('/')
 
 
@@ -427,7 +431,36 @@ def add_header(req):
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 # print what i need to see in the console
+
+def get_user_following_messages_and_likes():
+    '''Return messages and likes for a user for the users that he/she is following'''
+
+    user_id_following = (Follows
+                         .query
+                         .filter(Follows.user_being_followed_id == g.user.id)
+                         .all())
+
+    # Return only the messages that the user that is login
+    # for the users that he/she is followings
+    messages = (Message
+                .query
+                .filter(Message.user_id.in_([u.user_following_id for u in user_id_following]))
+                .order_by(Message.timestamp.desc())
+                .limit(100)
+                .all())
+
+    likes = Likes.query.filter_by(user_id=g.user.id).all()
+
+    return (messages, likes)
+
+
 def personal_debugger(var):
     print('========================================')
+    print('========================================')
+    print('========================================')
+    print('========================================')
     print(var)
+    print('========================================')
+    print('========================================')
+    print('========================================')
     print('========================================')
