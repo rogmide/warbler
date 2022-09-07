@@ -2,8 +2,9 @@ import os
 from flask import Flask, render_template, request, flash, redirect, session, g
 from sqlalchemy.exc import IntegrityError, PendingRollbackError
 from forms import UserAddForm, UserEditForm, LoginForm, MessageForm
-from models import db, connect_db, User, Message
+from models import db, connect_db, User, Message, Follows
 from psycopg2.errors import UniqueViolation
+from sqlalchemy import text, and_
 
 CURR_USER_KEY = "curr_user"
 
@@ -15,7 +16,7 @@ app.config['SQLALCHEMY_DATABASE_URI'] = (
     os.environ.get('DATABASE_URL', 'postgresql:///warbler'))
 
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-app.config['SQLALCHEMY_ECHO'] = False
+app.config['SQLALCHEMY_ECHO'] = True
 app.config['DEBUG_TB_INTERCEPT_REDIRECTS'] = True
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', "it's a secret")
 
@@ -232,7 +233,6 @@ def profile():
             g.user.header_image_url = form.header_image_url.data or g.user.header_image_url or User.header_image_url.default.arg
             g.user.bio = form.bio.data or g.user.bio
 
-
             # Added a bunch of logic to control duplicate name and email in the db
             # Because for some reason cant control duplicate name or email with the exeptions
             # This works for now but is not efficiency can be better
@@ -368,8 +368,17 @@ def homepage():
     """
 
     if g.user:
+        # Getting the users ID that the user is following messages
+        user_id_following = (Follows
+                             .query
+                             .filter(Follows.user_being_followed_id == g.user.id)
+                             .all())
+
+        # Return only the messages that the user that is login
+        # for the users that he/she is followings
         messages = (Message
                     .query
+                    .filter(Message.user_id.in_([u.user_following_id for u in user_id_following]))
                     .order_by(Message.timestamp.desc())
                     .limit(100)
                     .all())
