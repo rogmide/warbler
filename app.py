@@ -1,8 +1,9 @@
+from crypt import methods
 import os
 from flask import Flask, render_template, request, flash, redirect, session, g
 from sqlalchemy.exc import IntegrityError, PendingRollbackError
 from forms import UserAddForm, UserEditForm, LoginForm, MessageForm
-from models import db, connect_db, User, Message, Follows
+from models import Likes, db, connect_db, User, Message, Follows
 from psycopg2.errors import UniqueViolation
 from sqlalchemy import text, and_
 
@@ -227,8 +228,6 @@ def profile():
 
         if g.user.authenticate(g.user.username, form.password.data):
 
-            # g.user.username = form.username.data
-            # g.user.email = form.email.data
             g.user.image_url = form.image_url.data or g.user.image_url
             g.user.header_image_url = form.header_image_url.data or g.user.header_image_url or User.header_image_url.default.arg
             g.user.bio = form.bio.data or g.user.bio
@@ -270,15 +269,7 @@ def profile():
             #     flash(f'{g.user.username} updated successfully.', 'info')
             #     return redirect(f'/users/{g.user.id}')
 
-            # except PendingRollbackError:
-            #     flash("Username/Mail already taken", 'danger')
-            #     return render_template('users/edit.html', form=form)
-
             # except IntegrityError:
-            #     flash("Username/Mail already taken", 'danger')
-            #     return render_template('users/edit.html', form=form)
-
-            # except UniqueViolation:
             #     flash("Username/Mail already taken", 'danger')
             #     return render_template('users/edit.html', form=form)
 
@@ -383,10 +374,37 @@ def homepage():
                     .limit(100)
                     .all())
 
-        return render_template('home.html', messages=messages)
+        likes = Likes.query.filter_by(user_id=g.user.id).all()
+        personal_debugger(likes)
+
+        return render_template('home.html', messages=messages, likes=[l.message_id for l in likes])
 
     else:
         return render_template('home-anon.html')
+
+
+@app.route('/users/add_like/<int:msg_id>', methods=['GET', 'POST'])
+def get_and_add_likes(msg_id):
+    '''Show likes for a user or add a like to for the user'''
+
+    like = Likes.query.filter_by(user_id=g.user.id, message_id=msg_id).first()
+    personal_debugger(like)
+    if like:
+        # like = Likes(user_id=g.user.id, message_id=msg_id)
+        db.session.delete(like)
+        db.session.commit()
+    else:
+        like = Likes(user_id=g.user.id, message_id=msg_id)
+        db.session.add(like)
+        db.session.commit()
+
+    # try:
+    #     db.session.commit()
+    # except IntegrityError:
+    #     flash('Already there', 'info')
+
+
+    return redirect('/')
 
 
 ##############################################################################
