@@ -393,7 +393,7 @@ def get_and_add_likes(msg_id):
     '''Show likes for a user or add a like to for the user'''
 
     like = Likes.query.filter_by(user_id=g.user.id, message_id=msg_id).first()
-    personal_debugger(like)
+    
     if like:
         # like = Likes(user_id=g.user.id, message_id=msg_id)
         db.session.delete(like)

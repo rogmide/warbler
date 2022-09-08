@@ -174,6 +174,9 @@ class Message(db.Model):
 
     __tablename__ = 'messages'
 
+    def __repr__(self):
+        return f"<Msg #{self.id}: {self.text}, {self.timestamp}, u-id: {self.user_id}>"
+
     id = db.Column(
         db.Integer,
         primary_key=True,
