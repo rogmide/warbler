@@ -71,3 +71,44 @@ class MessageViewTestCase(TestCase):
 
             msg = Message.query.one()
             self.assertEqual(msg.text, "Hello")
+
+    def test_message_show(self):
+
+        user = User.query.filter_by(username='testuser').first()
+
+        msg = Message(
+            text="a test message",
+            user_id=user.id
+        )
+        
+        db.session.add(msg)
+        db.session.commit()
+
+        with self.client as c:
+            with c.session_transaction() as sess:
+                sess[CURR_USER_KEY] = user.id
+            
+            msg = Message.query.filter_by(text='a test message').first()
+
+            resp = c.get(f'/messages/{msg.id}')
+
+            self.assertEqual(resp.status_code, 200)
+            self.assertIn(msg.text, str(resp.data))
+
+    def test_message_delete_need_signin(self):
+
+        user = User.query.filter_by(username='testuser').first()
+
+        msg = Message(
+            text="a test message",
+            user_id=user.id
+        )
+        
+        db.session.add(msg)
+        db.session.commit()
+
+        with self.client as c:
+            resp = c.post(f"/messages/{msg.id}/delete", follow_redirects=True)
+            
+            self.assertEqual(resp.status_code, 200)
+            self.assertIn("Access unauthorized", str(resp.data))
