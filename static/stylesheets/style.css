@@ -552,8 +552,13 @@ p.card-bio {
 }
 
 .warbler_404 {
+  width: 80vw;
   margin-top: 50px;
   border-radius: 20px;
   box-shadow: 5px 5px #888888;
+}
+
+.unsplash:link {
+  text-decoration: none;
 }
 
