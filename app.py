@@ -410,6 +410,12 @@ def get_and_add_likes(msg_id):
 
     return redirect('/')
 
+@app.errorhandler(404)
+def not_found(e):
+    '''404 Error Handeling'''
+
+    return render_template("404.html")
+
 
 ##############################################################################
 # Turn off all caching in Flask
@@ -452,6 +458,8 @@ def get_user_following_messages_and_likes():
     likes = Likes.query.filter_by(user_id=g.user.id).all()
 
     return (messages, likes)
+
+
 
 
 def personal_debugger(var):
