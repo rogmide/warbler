@@ -1,6 +1,6 @@
 from crypt import methods
 import os
-from flask import Flask, render_template, request, flash, redirect, session, g
+from flask import Flask, render_template, request, flash, redirect, session, g, jsonify
 from sqlalchemy.exc import IntegrityError, PendingRollbackError
 from forms import UserAddForm, UserEditForm, LoginForm, MessageForm
 from models import Likes, db, connect_db, User, Message, Follows
@@ -388,27 +388,37 @@ def homepage():
         return render_template('home-anon.html')
 
 
-@app.route('/users/add_like/<int:msg_id>', methods=['GET', 'POST'])
+@app.route('/users/add_like/<int:msg_id>', methods=['POST'])
 def get_and_add_likes(msg_id):
     '''Show likes for a user or add a like to for the user'''
 
-    like = Likes.query.filter_by(user_id=g.user.id, message_id=msg_id).first()
-    
-    if like:
-        # like = Likes(user_id=g.user.id, message_id=msg_id)
-        db.session.delete(like)
-        db.session.commit()
-    else:
+    action = request.json['action']
+
+    if action == 'add':
         like = Likes(user_id=g.user.id, message_id=msg_id)
         db.session.add(like)
         db.session.commit()
+        return (jsonify({'result': 'add_pass'}), 200)
 
-    # try:
+    if action == 'remove':
+        like_delete = Likes.query.filter_by(
+            user_id=g.user.id, message_id=msg_id).first()
+        db.session.delete(like_delete)
+        db.session.commit()
+        return (jsonify({'result': 'remove_pass'}), 200)
+
+    #
+
+    # if like:
+    #     db.session.delete(like)
     #     db.session.commit()
-    # except IntegrityError:
-    #     flash('Already there', 'info')
+    # else:
+    #     like = Likes(user_id=g.user.id, message_id=msg_id)
+    #     db.session.add(like)
+    #     db.session.commit()
 
-    return redirect('/')
+    # return redirect('/')
+
 
 @app.errorhandler(404)
 def not_found(e):
@@ -458,8 +468,6 @@ def get_user_following_messages_and_likes():
     likes = Likes.query.filter_by(user_id=g.user.id).all()
 
     return (messages, likes)
-
-
 
 
 def personal_debugger(var):

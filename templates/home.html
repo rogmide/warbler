@@ -68,13 +68,13 @@
             class="
                 btn 
                 btn-sm 
-                {{'btn-primary' if msg.id in likes else 'btn-secondary'}}"
+                {{'btn-primary' if msg.id in likes else 'btn-secondary'}}
+                {{'remove-like' if msg.id in likes else 'add-like'}}"
+            id="{{ msg.id }}"
           >
-            {% if msg.id in likes %}
-            <b style="font-size: 15px">♥</b>
-            {% else %}
-            <i class="fa fa-thumbs-up"></i>
-            {% endif %}
+            <i 
+              class="{{ msg.id }}-icon_likes fa-regular {% if msg.id in likes %} fa-heart {% else %} fa-thumbs-up {% endif %}"
+            ></i>
           </button>
         </form>
       </li>
