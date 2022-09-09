@@ -68,8 +68,9 @@
             class="
                 btn 
                 btn-sm 
+                button-action
                 {{'btn-primary' if msg.id in likes else 'btn-secondary'}}
-                {{'remove-like' if msg.id in likes else 'add-like'}}"
+                {{ 'remove-like' if msg.id in likes else 'add-like' }}"
             id="{{ msg.id }}"
           >
             <i 
