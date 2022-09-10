@@ -2,7 +2,7 @@ from crypt import methods
 import os
 from flask import Flask, render_template, request, flash, redirect, session, g, jsonify, url_for
 from sqlalchemy.exc import IntegrityError, PendingRollbackError
-from forms import UserAddForm, UserEditForm, LoginForm, MessageForm
+from forms import UserAddForm, UserEditForm, LoginForm, MessageForm, ChangePasswordForm
 from models import Likes, db, connect_db, User, Message, Follows
 from psycopg2.errors import UniqueViolation
 from sqlalchemy import text, and_
@@ -91,7 +91,7 @@ def signup():
             return render_template('users/signup.html', form=form)
 
         do_login(user)
-
+        login_user(user)
         return redirect("/")
 
     else:
@@ -301,6 +301,38 @@ def profile():
             return redirect('/')
 
     return render_template('users/edit.html', form=form)
+
+
+@app.route('/users/pwd_change', methods=['GET', "POST"])
+@login_required
+def change_password():
+    """update user password user."""
+
+    form = ChangePasswordForm()
+
+    if form.validate_on_submit():
+
+        password = form.password.data
+        new_pwd = form.new_pwd.data
+        confirm_pwd = form.confirm_pwd.data
+
+        user = User.password_change(g.user.id, password, new_pwd, confirm_pwd)
+
+        if user == 'pwd_wrong':
+            form.password.errors.append(
+                'Password is incorrect!')
+
+        if user == 'pwd_dont_match':
+            form.new_pwd.errors.append(
+                'Password need to match!')
+            form.confirm_pwd.errors.append(
+                'Password need to match!')
+
+        if user == 'success':
+            flash('Password has Updated', 'info')
+            return redirect('/')
+
+    return render_template('users/change_password.html', form=form)
 
 
 @app.route('/users/delete', methods=["POST"])

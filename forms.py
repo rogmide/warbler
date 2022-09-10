@@ -34,3 +34,11 @@ class UserEditForm(FlaskForm):
     image_url = StringField('(Optional) Profile Image')
     header_image_url = StringField('(Optional) Banner Image')
     bio = StringField('(Optional) Bio')
+
+
+class ChangePasswordForm(FlaskForm):
+    """Change Password Form"""
+
+    password = PasswordField('Old Password', validators=[Length(min=6)])
+    new_pwd = PasswordField('New Password', validators=[Length(min=6)])
+    confirm_pwd = PasswordField('Confirm Password', validators=[Length(min=6)])

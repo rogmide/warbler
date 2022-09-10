@@ -171,6 +171,32 @@ class User(db.Model, UserMixin):
 
         return False
 
+    @classmethod
+    def password_change(cls, user_id, old_pwd, new_pwd, confirm_pwd):
+        '''update user password if the old_pwd is correct
+            and the new and confirm are the same
+        '''
+
+        user = cls.query.get_or_404(user_id)
+
+        if user:
+
+            if not user.authenticate(user.username, old_pwd):
+                return 'pwd_wrong'
+
+            if new_pwd == confirm_pwd:
+                hashed_pwd = bcrypt.generate_password_hash(
+                    new_pwd).decode('UTF-8')
+
+                user.password = hashed_pwd
+
+                db.session.add(user)
+                db.session.commit()
+
+                return 'success'
+            else:
+                return 'pwd_dont_match'
+
 
 class Message(db.Model):
     """An individual message ("warble")."""
