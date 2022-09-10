@@ -154,6 +154,7 @@ def list_users():
 
 
 @app.route('/users/<int:user_id>')
+@login_required
 def users_show(user_id):
     """Show user profile."""
 
@@ -168,9 +169,9 @@ def users_show(user_id):
                 .limit(100)
                 .all())
 
-    # msg_likes = get_user_following_messages_and_likes()
+    msg_likes = get_user_following_messages_and_likes()
 
-    return render_template('users/show.html', user=user, messages=messages)
+    return render_template('users/show.html', user=user, messages=messages,  msg_liked=len(msg_likes[1]))
 
 
 @app.route('/users/<int:user_id>/following')
