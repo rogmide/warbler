@@ -1,6 +1,7 @@
 """SQLAlchemy models for Warbler."""
 
 from datetime import datetime
+from email.policy import default
 from flask_bcrypt import Bcrypt
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import UserMixin
@@ -82,11 +83,11 @@ class User(db.Model, UserMixin):
     )
 
     bio = db.Column(
-        db.Text,
+        db.Text, default='Id diam vel quam elementum pulvinar etiam non. Est ante in nibh mauris cursus mattis molestie a iaculis. '
     )
 
     location = db.Column(
-        db.Text,
+        db.Text, default='FarFarAway City'
     )
 
     password = db.Column(
