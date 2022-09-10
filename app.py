@@ -1,6 +1,6 @@
 from crypt import methods
 import os
-from flask import Flask, render_template, request, flash, redirect, session, g, jsonify
+from flask import Flask, render_template, request, flash, redirect, session, g, jsonify, url_for
 from sqlalchemy.exc import IntegrityError, PendingRollbackError
 from forms import UserAddForm, UserEditForm, LoginForm, MessageForm
 from models import Likes, db, connect_db, User, Message, Follows
@@ -348,7 +348,7 @@ def messages_show(message_id):
 @login_required
 def messages_destroy(message_id):
     """Delete a message."""
-    
+
     msg = Message.query.get(message_id)
     db.session.delete(msg)
     db.session.commit()
