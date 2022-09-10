@@ -218,7 +218,8 @@ def add_follow(follow_id):
     g.user.following.append(followed_user)
     db.session.commit()
 
-    return redirect(f"/users/{g.user.id}/following")
+    return redirect(url_for('show_following', user_id=g.user.id))
+    # return redirect(f"/users/{g.user.id}/following")
 
 
 @app.route('/users/stop-following/<int:follow_id>', methods=['POST'])
@@ -230,7 +231,8 @@ def stop_following(follow_id):
     g.user.following.remove(followed_user)
     db.session.commit()
 
-    return redirect(f"/users/{g.user.id}/following")
+    return redirect(url_for('show_following', user_id=g.user.id))
+    # return redirect(f"/users/{g.user.id}/following")
 
 
 @app.route('/users/profile', methods=["GET", "POST"])
@@ -279,7 +281,8 @@ def profile():
             db.session.commit()
 
             flash(f'{g.user.username} updated successfully.', 'info')
-            return redirect(f'/users/{g.user.id}')
+            return redirect(url_for('users_show', user_id=g.user.id))
+            # return redirect(f'/users/{g.user.id}')
 
             # try:
             #     # db.session.add(g.user)
@@ -331,7 +334,8 @@ def messages_add():
         g.user.messages.append(msg)
         db.session.commit()
 
-        return redirect(f"/users/{g.user.id}")
+        return redirect(url_for('users_show', user_id=g.user.id))
+      # return redirect(f'/users/{g.user.id}')
 
     return render_template('messages/new.html', form=form)
 
@@ -353,7 +357,8 @@ def messages_destroy(message_id):
     db.session.delete(msg)
     db.session.commit()
 
-    return redirect(f"/users/{g.user.id}")
+    return redirect(url_for('users_show', user_id=g.user.id))
+  # return redirect(f'/users/{g.user.id}')
 
 
 ##############################################################################
