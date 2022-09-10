@@ -309,7 +309,7 @@ def profile():
 def change_password():
     """update user password user."""
 
-    form = ChangePasswordForm()
+    form = ChangePasswordForm(obj=g.user)
 
     if form.validate_on_submit():
 
@@ -324,10 +324,7 @@ def change_password():
                 'Password is incorrect!')
 
         if user == 'pwd_dont_match':
-            form.new_pwd.errors.append(
-                'Password need to match!')
-            form.confirm_pwd.errors.append(
-                'Password need to match!')
+            flash('New and Confirm Password do not match', 'danger')
 
         if user == 'success':
             flash('Password has Updated', 'info')
